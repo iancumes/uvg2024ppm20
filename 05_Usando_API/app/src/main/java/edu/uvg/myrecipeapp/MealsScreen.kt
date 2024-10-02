@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,53 +26,53 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 
 @Composable
-fun RecipeScreen(modifier: Modifier = Modifier, onCategoryClick: (String) -> Unit) {
-    val recipeViewModel: MainViewModel = viewModel()
-    val viewstate by recipeViewModel.categoriesState
+fun MealsScreen(modifier: Modifier = Modifier, category: String, onMealClick: (String) -> Unit) {
+    val viewModel: MainViewModel = viewModel()
+    val mealsState by viewModel.mealsState
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    LaunchedEffect(category) {
+        viewModel.fetchMealsByCategory(category)
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {  // Usamos el Modifier
         when {
-            viewstate.loading -> {
+            mealsState.loading -> {
                 CircularProgressIndicator(modifier.align(Alignment.Center))
             }
 
-            viewstate.error != null -> {
-                Text("Error occurred: ${viewstate.error}")
+            mealsState.error != null -> {
+                Text("Error occurred: ${mealsState.error}")
             }
 
             else -> {
-                CategoryScreen(categories = viewstate.list, onCategoryClick = onCategoryClick)
+                LazyVerticalGrid(GridCells.Fixed(2)) {
+                    items(mealsState.list) { meal ->
+                        MealItem(meal = meal, onMealClick = onMealClick)
+                    }
+                }
             }
         }
     }
 }
 
-@Composable
-fun CategoryScreen(categories: List<Category>, onCategoryClick: (String) -> Unit) {
-    LazyVerticalGrid(GridCells.Fixed(2), modifier = Modifier.fillMaxSize()) {
-        items(categories) { category ->
-            CategoryItem(category = category, onCategoryClick = onCategoryClick)
-        }
-    }
-}
 
 @Composable
-fun CategoryItem(category: Category, onCategoryClick: (String) -> Unit) {
+fun MealItem(meal: Meal, onMealClick: (String) -> Unit) {
     Column(
         modifier = Modifier
             .padding(8.dp)
             .fillMaxSize()
-            .clickable { onCategoryClick(category.strCategory) },
+            .clickable { onMealClick(meal.idMeal) },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = rememberAsyncImagePainter(category.strCategoryThumb),
+            painter = rememberAsyncImagePainter(meal.strMealThumb),
             contentDescription = null,
             modifier = Modifier.fillMaxSize().aspectRatio(1f)
         )
 
         Text(
-            text = category.strCategory,
+            text = meal.strMeal,
             color = Color.Black,
             style = TextStyle(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(top = 4.dp)

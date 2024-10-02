@@ -10,14 +10,33 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import edu.uvg.myrecipeapp.ui.theme.MyRecipeAppTheme
 
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             MyRecipeAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    RecipeScreen(modifier = Modifier.padding(innerPadding))
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = "categories") {
+                    composable("categories") {
+                        RecipeScreen(onCategoryClick = { category ->
+                            navController.navigate("meals/$category")
+                        })
+                    }
+                    composable("meals/{category}") { backStackEntry ->
+                        val category = backStackEntry.arguments?.getString("category")
+                        MealsScreen(modifier = Modifier, category = category ?: "", onMealClick = { mealId ->
+                            navController.navigate("mealDetails/$mealId")
+                        })
+                    }
+                    composable("mealDetails/{mealId}") { backStackEntry ->
+                        val mealId = backStackEntry.arguments?.getString("mealId")
+                        MealDetailScreen(modifier = Modifier, mealId = mealId ?: "")
+                    }
                 }
             }
         }
