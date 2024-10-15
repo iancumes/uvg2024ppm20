@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)  // Aquí agregamos KSP
 }
 
 android {
@@ -50,19 +51,24 @@ android {
 }
 
 dependencies {
-
-    //Compose ViewMode
+    // Compose ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 
-    //Network calls
+    // Network calls
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
 
-    //json to Kotlin object mapping
+    // JSON to Kotlin object mapping
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
-    //Image loading
+    // Image loading
     implementation("io.coil-kt:coil-compose:2.4.0")
 
+    // Room components
+    implementation("androidx.room:room-runtime:2.5.0")  // Room Runtime
+    ksp("androidx.room:room-compiler:2.5.0")  // Room Compiler for KSP
+    implementation("androidx.room:room-ktx:2.5.0")  // Room Kotlin extensions for coroutines support
+
+    // Other dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -73,11 +79,15 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
+
+    // Test dependencies
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+
+    // Debug dependencies
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
