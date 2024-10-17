@@ -1,17 +1,11 @@
+// MessageViewModel.kt
 package edu.uvg.uvgchatejemplo.viewmodel
 
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.google.firebase.auth.FirebaseAuth
 import edu.uvg.uvgchatejemplo.Injection
-import edu.uvg.uvgchatejemplo.data.Message
-import edu.uvg.uvgchatejemplo.data.MessageRepository
-import edu.uvg.uvgchatejemplo.data.Result.*
-import edu.uvg.uvgchatejemplo.data.User
-import edu.uvg.uvgchatejemplo.data.UserRepository
+import edu.uvg.uvgchatejemplo.data.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class MessageViewModel : ViewModel() {
@@ -28,55 +22,64 @@ class MessageViewModel : ViewModel() {
         loadCurrentUser()
     }
 
-
     private val _messages = MutableLiveData<List<Message>>()
     val messages: LiveData<List<Message>> get() = _messages
 
-    private val _roomId = MutableLiveData<String>()
     private val _currentUser = MutableLiveData<User>()
     val currentUser: LiveData<User> get() = _currentUser
 
-    fun setRoomId(roomId: String) {
-        _roomId.value = roomId
-        loadMessages()
-    }
+    private val _chatUser = MutableLiveData<User>()
+    val chatUser: LiveData<User> get() = _chatUser
 
-    fun sendMessage(text: String) {
-        if (_currentUser.value != null) {
-            val message = Message(
-                senderFirstName = _currentUser.value!!.firstName,
-                senderId = _currentUser.value!!.email,
-                text = text
-            )
-            viewModelScope.launch {
-                when (messageRepository.sendMessage(_roomId.value.toString(), message)) {
-                    is Success -> Unit
-                    is Error -> {
+    private var encryptionShift: Int = 0
 
-                    }
+    fun loadChatUser(email: String, shift: Int) {
+        encryptionShift = shift
+        viewModelScope.launch {
+            when (val result = userRepository.getUserByEmail(email)) {
+                is Result.Success -> {
+                    _chatUser.value = result.data
+                    loadMessages()
                 }
+                is Result.Error -> { /* Handle error */ }
             }
         }
     }
 
-
-    fun loadMessages() {
+    fun sendMessage(text: String) {
+        val senderId = _currentUser.value?.email ?: return
+        val receiverId = _chatUser.value?.email ?: return
+        val encryptedText = CaesarCipherUtil.encrypt(text, encryptionShift)
+        val message = Message(
+            senderId = senderId,
+            receiverId = receiverId,
+            text = encryptedText
+        )
         viewModelScope.launch {
-            if (_roomId != null) {
-                messageRepository.getChatMessages(_roomId.value.toString())
-                    .collect { _messages.value = it }
-            }
+            messageRepository.sendMessage(message)
+        }
+    }
+
+    private fun loadMessages() {
+        val senderId = _currentUser.value?.email ?: return
+        val receiverId = _chatUser.value?.email ?: return
+        viewModelScope.launch {
+            messageRepository.getChatMessages(senderId, receiverId)
+                .collect { messages ->
+                    val decryptedMessages = messages.map { message ->
+                        val decryptedText = CaesarCipherUtil.decrypt(message.text, encryptionShift)
+                        message.copy(text = decryptedText)
+                    }
+                    _messages.value = decryptedMessages
+                }
         }
     }
 
     private fun loadCurrentUser() {
         viewModelScope.launch {
             when (val result = userRepository.getCurrentUser()) {
-                is Success -> _currentUser.value = result.data
-                is Error -> {
-
-                }
-
+                is Result.Success -> _currentUser.value = result.data
+                is Result.Error -> { /* Handle error */ }
             }
         }
     }

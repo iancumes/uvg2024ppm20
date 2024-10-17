@@ -1,7 +1,6 @@
 package edu.uvg.uvgchatejemplo.screen
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,16 +42,21 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ChatScreen(
-    roomId: String,
-    messageViewModel:
-    MessageViewModel = viewModel(),
+    receiverEmail: String,
+    encryptionShift: Int,
+    messageViewModel: MessageViewModel = viewModel()
 ) {
+    LaunchedEffect(receiverEmail) {
+        messageViewModel.loadChatUser(receiverEmail, encryptionShift)
+    }
     val messages by messageViewModel.messages.observeAsState(emptyList())
-    messageViewModel.setRoomId(roomId)
     val text = remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -61,10 +65,14 @@ fun ChatScreen(
         // Display the chat messages
         LazyColumn(
             modifier = Modifier.weight(1f)
-        )  {
+        ) {
             items(messages) { message ->
-                ChatMessageItem(message =  message.copy(isSentByCurrentUser
-                = message.senderId == messageViewModel.currentUser.value?.email)
+                val isSentByCurrentUser = message.senderId == messageViewModel.currentUser.value?.email
+                val senderName = if (isSentByCurrentUser) "You" else messageViewModel.chatUser.value?.firstName ?: ""
+                ChatMessageItem(
+                    message = message,
+                    isSentByCurrentUser = isSentByCurrentUser,
+                    senderName = senderName
                 )
             }
         }
@@ -92,7 +100,6 @@ fun ChatScreen(
                         messageViewModel.sendMessage(text.value.trim())
                         text.value = ""
                     }
-                    messageViewModel.loadMessages()
                 }
             ) {
                 Icon(imageVector = Icons.Default.Send, contentDescription = "Send")
@@ -102,25 +109,22 @@ fun ChatScreen(
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Preview
 @Composable
-fun ChatPreview() {
-    ChatScreen(roomId = "")
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun ChatMessageItem(message: Message) {
+fun ChatMessageItem(
+    message: Message,
+    isSentByCurrentUser: Boolean,
+    senderName: String
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        horizontalAlignment = if (message.isSentByCurrentUser) Alignment.End else Alignment.Start
+        horizontalAlignment = if (isSentByCurrentUser) Alignment.End else Alignment.Start
     ) {
         Box(
             modifier = Modifier
                 .background(
-                    if (message.isSentByCurrentUser) colorResource(id = R.color.purple_700) else Color.Gray,
+                    if (isSentByCurrentUser) colorResource(id = R.color.purple_700) else Color.Gray,
                     shape = RoundedCornerShape(8.dp)
                 )
                 .padding(8.dp)
@@ -133,14 +137,14 @@ fun ChatMessageItem(message: Message) {
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = message.senderFirstName,
+            text = senderName,
             style = TextStyle(
                 fontSize = 12.sp,
                 color = Color.Gray
             )
         )
         Text(
-            text = formatTimestamp(message.timestamp), // Replace with actual timestamp logic
+            text = formatTimestamp(message.timestamp),
             style = TextStyle(
                 fontSize = 12.sp,
                 color = Color.Gray
@@ -156,8 +160,8 @@ private fun formatTimestamp(timestamp: Long): String {
     val now = LocalDateTime.now()
 
     return when {
-        isSameDay(messageDateTime, now) -> "today ${formatTime(messageDateTime)}"
-        isSameDay(messageDateTime.plusDays(1), now) -> "yesterday ${formatTime(messageDateTime)}"
+        isSameDay(messageDateTime, now) -> "Today ${formatTime(messageDateTime)}"
+        isSameDay(messageDateTime.plusDays(1), now) -> "Yesterday ${formatTime(messageDateTime)}"
         else -> formatDate(messageDateTime)
     }
 }

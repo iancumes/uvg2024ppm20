@@ -15,30 +15,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import edu.uvg.uvgchatejemplo.screen.ChatRoomListScreen
+import androidx.navigation.navArgument
+
+
+import edu.uvg.uvgchatejemplo.screen.HomeScreen
 import edu.uvg.uvgchatejemplo.screen.ChatScreen
 import edu.uvg.uvgchatejemplo.screen.Screen
 import edu.uvg.uvgchatejemplo.screen.SignUpScreen
 import edu.uvg.uvgchatejemplo.screen.LoginScreen
 import edu.uvg.uvgchatejemplo.ui.theme.UVGChatEjemploTheme
 import edu.uvg.uvgchatejemplo.viewmodel.AuthViewModel
-
+import edu.uvg.uvgchatejemplo.data.User
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
-
             val navController = rememberNavController()
             val authViewModel: AuthViewModel = viewModel()
             UVGChatEjemploTheme {
-
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // A surface container using the 'background' color from the theme
                     Surface(
                         modifier = Modifier.padding(innerPadding),
                         color = MaterialTheme.colorScheme.background
@@ -46,9 +46,7 @@ class MainActivity : ComponentActivity() {
                         NavigationGraph(navController = navController, authViewModel = authViewModel)
                     }
                 }
-
             }
-
         }
     }
 }
@@ -71,22 +69,32 @@ fun NavigationGraph(
         }
         composable(Screen.LoginScreen.route) {
             LoginScreen(
-                authViewModel = authViewModel
-                ,onNavigateToSignUp = { navController.navigate(Screen.SignupScreen.route) }
-                , onSignInSuccess = { navController.navigate(Screen.ChatRoomsScreen.route) }
+                authViewModel = authViewModel,
+                onNavigateToSignUp = { navController.navigate(Screen.SignupScreen.route) },
+                onSignInSuccess = { navController.navigate(Screen.HomeScreen.route) }
             )
         }
-        composable(Screen.ChatRoomsScreen.route) {
-            ChatRoomListScreen (
-                onJoinClicked = { navController.navigate("${Screen.ChatScreen.route}/${it.id}") }
+        composable(Screen.HomeScreen.route) {
+            HomeScreen(
+                onUserSelected = { user, shift ->
+                    navController.navigate(
+                        "${Screen.ChatScreen.route}/${user.email}/$shift"
+                    )
+                }
             )
         }
-
-        composable("${Screen.ChatScreen.route}/{roomId}") {
-            val roomId: String = it
-                .arguments?.getString("roomId") ?: ""
-            ChatScreen(roomId = roomId)
+        composable(
+            route = "${Screen.ChatScreen.route}/{receiverEmail}/{encryptionShift}",
+            arguments = listOf(
+                navArgument("receiverEmail") { type = NavType.StringType },
+                navArgument("encryptionShift") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val receiverEmail = backStackEntry.arguments?.getString("receiverEmail") ?: ""
+            val encryptionShift = backStackEntry.arguments?.getInt("encryptionShift") ?: 0
+            if (receiverEmail.isNotEmpty()) {
+                ChatScreen(receiverEmail = receiverEmail, encryptionShift = encryptionShift)
+            }
         }
     }
 }
-

@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.gms.google-services")
+    id ("kotlin-parcelize".toString())
 }
 
 android {
@@ -66,11 +67,12 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     //<Firebase SDK dependencies/>
-
+    implementation ("androidx.navigation:navigation-compose:2.8.3")
     //<Chat dependencies>
     implementation("androidx.navigation:navigation-compose:2.8.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.compose.runtime:runtime-livedata:1.7.3")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.1")
     //<Chat dependencies/>
 
     testImplementation(libs.junit)
