@@ -64,6 +64,7 @@ dependencies {
     implementation (libs.google.firebase.storage.ktx)
     implementation (libs.google.firebase.firestore.ktx)
 
+
     // Para acceder a la galería
     implementation (libs.accompanist.permissions)
     implementation (libs.androidx.activity.compose.v172)
@@ -74,4 +75,6 @@ dependencies {
     // Add the dependencies for the App Check libraries
     // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation(libs.com.google.firebase.firebase.appcheck.debug)
+
+    implementation(libs.androidx.datastore.preferences)
 }

@@ -6,24 +6,22 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.*
 import edu.uvg.files_and_images.screens.BlogScreen
 import edu.uvg.files_and_images.screens.HomeScreen
+import edu.uvg.files_and_images.screens.ProfileScreen
 import edu.uvg.files_and_images.ui.theme.MyApplicationTheme
 import edu.uvg.localsharedstorage.Screen
 
@@ -39,12 +37,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
-fun MicroBlogApp(modifier: Modifier = Modifier){
+fun MicroBlogApp(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
 
-    Scaffold (
+    Scaffold(
         bottomBar = {
             BottomNavigationBar(navController = navController)
         }
@@ -54,12 +51,16 @@ fun MicroBlogApp(modifier: Modifier = Modifier){
 }
 
 @Composable
-fun NavHostContainer(navController: NavHostController, modifier: Modifier = Modifier){
+fun NavHostContainer(navController: NavHostController, modifier: Modifier = Modifier) {
 
-
-    NavHost(navController = navController, startDestination = Screen.Home.route, modifier = modifier){
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Home.route,
+        modifier = modifier
+    ) {
         composable(Screen.Home.route) { HomeScreen() }
-        composable(Screen.Profile.route) { BlogScreen() }
+        composable(Screen.Blog.route) { BlogScreen() }
+        composable(Screen.Profile.route) { ProfileScreen() }
     }
 }
 
@@ -67,6 +68,7 @@ fun NavHostContainer(navController: NavHostController, modifier: Modifier = Modi
 fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
         Screen.Home,
+        Screen.Blog,
         Screen.Profile,
     )
 
